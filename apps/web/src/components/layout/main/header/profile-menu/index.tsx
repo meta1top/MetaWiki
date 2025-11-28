@@ -55,6 +55,9 @@ export const ProfileMenu: FC<ProfileMenuProps> = (props) => {
         <Link href={`/profile`}>
           <DropdownMenuItem>{t("个人资料")}</DropdownMenuItem>
         </Link>
+        <Link href="/profile/security">
+          <DropdownMenuItem>{t("安全设置")}</DropdownMenuItem>
+        </Link>
         {extra}
         <DropdownMenuItem onClick={exit}>{t("退出")}</DropdownMenuItem>
       </DropdownMenuContent>

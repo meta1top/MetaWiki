@@ -48,3 +48,21 @@ export const BindAtlassianSchema = z.object({
 });
 
 export type BindAtlassianData = z.infer<typeof BindAtlassianSchema>;
+
+export const PasswordChangeSchema = z
+  .object({
+    originPassword: z.string().min(1).regex(REGULAR_PASSWORD).describe("原密码"),
+    password: z.string().min(1).regex(REGULAR_PASSWORD).describe("新密码"),
+    passwordConfirm: z.string().min(1).regex(REGULAR_PASSWORD).describe("确认新密码"),
+  })
+  .superRefine(({ password, passwordConfirm }, ctx) => {
+    if (password !== passwordConfirm) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["passwordConfirm"],
+        message: "两次密码输入不一致",
+      });
+    }
+  });
+
+export type PasswordFormData = z.infer<typeof PasswordChangeSchema>;

@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/common/page/header";
 import { TitleBar } from "@/components/common/page/title-bar";
 import { useLayoutConfig } from "@/components/layout/hooks";
 import type { MainLayoutProps } from "@/components/layout/main";
+import { Password } from "./password";
 
 export const SecurityPage = () => {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export const SecurityPage = () => {
         <TitleBar title={title} />
       </PageHeader>
       <div className="container flex flex-col gap-md">
+        <Password />
         <Card title={t("二次验证")}>
           <div className="space-y-2">
             <p>{t("通过第二个登录步骤确保您的帐户更加安全。")}</p>
