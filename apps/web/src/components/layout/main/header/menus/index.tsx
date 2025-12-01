@@ -19,6 +19,22 @@ export const useNavs = (): NavItemConfig[] => {
   const { t } = useTranslation();
   return [
     {
+      id: "wiki",
+      title: t("知识库"),
+      href: "/wiki",
+      type: "link",
+    },
+    {
+      id: "agent",
+      title: t("智能体"),
+      href: "/agent",
+      type: "link",
+    },
+    {
+      id: "separator",
+      type: "separator",
+    },
+    {
       id: "profile",
       title: t("我的账号"),
       component: <Profile />,

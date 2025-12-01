@@ -23,7 +23,7 @@
     "@meta-1/editor": "0.0.29",
     "@meta-1/nest-ai": "0.0.1",
     "@meta-1/nest-assets": "0.0.5",
-    "@meta-1/nest-common": "0.0.12",
+    "@meta-1/nest-common": "0.0.13",
     "@meta-1/nest-message": "0.0.9",
     "@meta-1/nest-nacos": "0.0.7",
     "@meta-1/nest-security": "0.0.8",

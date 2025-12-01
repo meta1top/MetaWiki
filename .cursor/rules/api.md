@@ -11,27 +11,27 @@
 ```
 libs/types/
 ├── index.ts                    # 统一导出
-├── account/                    # 模块
+├── {module}/                    # 模块目录（如 account、user、order 等）
 │   ├── index.ts                # 模块统一导出
-│   └── account.schema.ts       # 账户相关的 Schema 和 Type
+│   └── {module}.schema.ts       # 模块相关的 Schema 和 Type
 └── ...
 ```
 
 libs/types/index.ts 示例：
 ```typescript
-export * from "./account";
+export * from "./{module}";  // 替换 {module} 为实际模块名
 export * from "./common.types";
 export * from "./regular";
 ```
 
-libs/types/account/index.ts 示例：
+libs/types/{module}/index.ts 示例（以 account 模块为例）：
 ```typescript
 export * from "./account.schema";
 export * from "./account.types";
 export * from "./account-otp.schema";
 ```
 
-libs/types/account/account.schema.ts
+libs/types/{module}/{module}.schema.ts 示例（以 account 模块为例）：
 ```typescript
 import { z } from "zod";
 
@@ -57,24 +57,24 @@ export type Token = z.infer<typeof TokenSchema>;
 
 types 是一个共享库，所以不能使用后端的技术，只能使用前后端都可以用的技术，所以，如果要为接口定义对象声明，后端需要声明自己的DTO。
 
-以 libs/account/ 为例
+以 libs/{module}/ 为例（以下示例使用 account 模块）
 
 ```
-libs/account/
+libs/{module}/
 ├── index.ts
 ├── dto/
 │   ├── index.ts                    # 统一导出
-│   ├── account-token.dto.ts        # 账号Token数据传输对象
-│   └── account.dto.ts              # 账号数据传输对象
+│   ├── {module}-token.dto.ts       # Token数据传输对象
+│   └── {module}.dto.ts             # 数据传输对象
 ├── entity/                         # 数据库实体
 └── ...
 ```
 
-libs/account/dto/account.dto.ts 示例：
+libs/{module}/dto}/{module}.dto.ts 示例（以 account 模块为例）：
 ```typescript
 import { createZodDto } from "nestjs-zod";
 
-import { BaseRegisterSchema, LoginSchema } from "@meta-1/wiki-types";
+import { BaseRegisterSchema, LoginSchema } from "@meta-1/{project}-types"; // 替换 {project} 为实际项目名称，如 wiki、authub
 
 export class RegisterDto extends createZodDto(BaseRegisterSchema) {}
 
@@ -92,24 +92,24 @@ ProfileDto.parse({
 ### 第四步：定义 Controller
 
 ```
-libs/account/
+libs/{module}/
 ├── index.ts
 ├── controller/
 │   ├── index.ts                    # 统一导出
-│   ├── account-token.controller.ts        # 账号Token数据传输对象
-│   └── account.controller.ts              # 账号数据传输对象
+│   ├── {module}-token.controller.ts        # Token控制器
+│   └── {module}.controller.ts              # 模块控制器
 ├── entity/                         # 数据库实体
 └── ...
 ```
 
-libs/account/controller/account.controller.ts 示例：
+libs/{module}/controller/{module}.controller.ts 示例（以 account 模块为例）：
 ```typescript
 import { Body, Controller, Get, Post } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { ApiResponse, ApiTags } from "@nestjs/swagger";
 
 import { md5 } from "@meta-1/nest-common";
 import { CurrentUser, Public, SessionService, type SessionUser } from "@meta-1/nest-security";
-import { LoginDto, RegisterDto } from "../dto";
+import { LoginDto, RegisterDto, ProfileDto } from "../dto";
 import { AccountService } from "../service";
 
 @ApiTags("AccountController")
@@ -121,9 +121,9 @@ export class AccountController {
   ) {}
 
   @Get("/profile")
-    @ApiResponse({
+  @ApiResponse({
     status: 200,
-    type: ProfileDto,  // 定义方式与LoginDto一直
+    type: ProfileDto,  // 定义方式与LoginDto一致
   })
   profile(@CurrentUser() user: SessionUser) {
     return this.accountService.findByEmail(user.username);
@@ -148,16 +148,24 @@ export class AccountController {
 }
 ```
 
+注意：
+1. 获取信息类（通常是GET方法），一定要给出 type 或 schema
+2. 创建或更新信息类（通常是POST/PUT/DELETE等方法），没有特殊要求，不返回数据。
+3. entity 通常不直接返回，所有返回给客户端的，都是采用schema + dto 的方式。
+4. 客户端使用 schema + type 的方式对等接受
+5. ApiResponse 没有 type 或 schema 的时候，不需要添加
+5. ApiResponse 有 type 时候，不需要 description，除非有多种情况。
+
 ## 使用
 
 ### 定义 rest
 
 在 apps/web/src/rest 里定义。
 
-apps/web/src/rest/account.ts 示例：
+apps/web/src/rest/{module}.ts 示例（以 account 模块为例）：
 ```typescript
-import type { LoginData, Profile, Token } from "@meta-1/wiki-types";
-import { RegisterData } from "@meta-1/wiki-types";
+import type { LoginData, Profile, Token } from "@meta-1/{project}-types"; // 替换 {project} 为实际项目名称
+import { RegisterData } from "@meta-1/{project}-types";
 import { get, post } from "@/utils/rest";
 
 export const login = (data: LoginData) => post<Token, LoginData>("@api/account/login", data);
@@ -177,7 +185,7 @@ export const register = (data: RegisterData) => post<Token, RegisterData>("@api/
 - useQuery
 - useMutation 
 
-使用示例：
+使用示例（以注册页面为例）：
 ```typescript
 "use client";
 
@@ -187,7 +195,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button, Form, FormItem, Input } from "@meta-1/design";
 import { SendCodeData } from "@meta-1/nest-types";
-import { RegisterData, RegisterSchema } from "@meta-1/wiki-types";
+import { RegisterData, RegisterSchema } from "@meta-1/{project}-types"; // 替换 {project} 为实际项目名称
 import { EmailCodeInput } from "@/components/common/input/email-code";
 import { useEncrypt, useMutation } from "@/hooks";
 import { register } from "@/rest/account";

@@ -26,7 +26,7 @@ import { otpStatus } from "@/rest/profile/security/mfa";
 import { DisableModal } from "./disable-modal";
 import { EnableModal } from "./enable-modal";
 
-export const MFAPage = () => {
+export const Page = () => {
   const { t } = useTranslation();
   const title = t("二次验证");
   useLayoutConfig<MainLayoutProps>({

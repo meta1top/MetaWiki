@@ -21,13 +21,13 @@
         "tsConfigPath": "libs/account/tsconfig.lib.json"
       }
     },
-    "repository": {
+    "kb": {
       "type": "library",
-      "root": "libs/repository",
+      "root": "libs/kb",
       "entryFile": "index",
-      "sourceRoot": "libs/repository/src",
+      "sourceRoot": "libs/kb/src",
       "compilerOptions": {
-        "tsConfigPath": "libs/repository/tsconfig.lib.json"
+        "tsConfigPath": "libs/kb/tsconfig.lib.json"
       }
     },
     "server": {

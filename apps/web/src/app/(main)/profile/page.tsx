@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { st } from "@/utils/locale.server";
 import { keywords, title } from "@/utils/seo";
-import { Profile } from "./components";
+import { Page } from "./components";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -11,4 +11,4 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default Profile;
+export default Page;

@@ -2,7 +2,10 @@ import { Column, Entity } from "typeorm";
 
 import { SnowflakeId } from "@meta-1/nest-common";
 
-@Entity("account_token")
+@Entity({
+  name: "account_token",
+  comment: "账号令牌",
+})
 export class AccountToken {
   @SnowflakeId()
   id: string;

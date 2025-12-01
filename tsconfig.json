@@ -22,8 +22,8 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@meta-1/wiki-repository": ["libs/repository/src"],
-      "@meta-1/wiki-repository/*": ["libs/repository/src/*"],
+      "@meta-1/wiki-kb": ["libs/kb/src"],
+      "@meta-1/wiki-kb/*": ["libs/kb/src/*"],
       "@meta-1/wiki-account": ["libs/account/src"],
       "@meta-1/wiki-account/*": ["libs/account/src/*"],
       "@meta-1/wiki-types": ["libs/types/src"],

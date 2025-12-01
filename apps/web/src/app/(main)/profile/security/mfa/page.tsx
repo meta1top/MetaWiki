@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { st } from "@/utils/locale.server";
 import { keywords, title } from "@/utils/seo";
-import { MFAPage } from "./components";
+import { Page } from "./components";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -10,7 +10,5 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: await keywords(),
   };
 }
-
-const Page = () => <MFAPage />;
 
 export default Page;

@@ -12,7 +12,7 @@ import { useLayoutConfig } from "@/components/layout/hooks";
 import type { MainLayoutProps } from "@/components/layout/main";
 import { Password } from "./password";
 
-export const SecurityPage = () => {
+export const Page = () => {
   const { t } = useTranslation();
   const title = t("安全设置");
   useLayoutConfig<MainLayoutProps>({

@@ -14,3 +14,5 @@ export const REGULAR_PHONE = /^1(3[0-9]|4[01456879]|5[0-35-9]|6[2567]|7[0-8]|8[0
 export const REGULAR_NUMBER = /^(0|[1-9][0-9]*)$/;
 
 export const CODE = /^\d{6}$/;
+
+export const REGULAR_WIKI_PATH = /^[a-z][a-z0-9_]*$/;

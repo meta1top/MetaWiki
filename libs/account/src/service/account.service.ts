@@ -1,9 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import ms from "ms";
 import { Repository } from "typeorm";
 
-import { AppError, Cacheable, CacheableService, md5 } from "@meta-1/nest-common";
+import { AppError, Cacheable, CacheableService, md5, Transactional } from "@meta-1/nest-common";
 import { MailCodeService } from "@meta-1/nest-message";
 import { EncryptService, OTPService, SessionService, TokenService } from "@meta-1/nest-security";
 import { Token } from "@meta-1/wiki-types";
@@ -15,7 +15,6 @@ import { AccountConfigService } from "./account-config.service";
 @Injectable()
 @CacheableService()
 export class AccountService {
-  private readonly logger = new Logger(AccountService.name);
   constructor(
     @InjectRepository(Account) private repository: Repository<Account>,
     private readonly mailCodeService: MailCodeService,
@@ -26,6 +25,7 @@ export class AccountService {
     private readonly otpService: OTPService,
   ) {}
 
+  @Transactional()
   async register(dto: RegisterDto): Promise<Token> {
     // 注册验证码
     const isValid = await this.mailCodeService.verify(dto.email, "register", dto.code);

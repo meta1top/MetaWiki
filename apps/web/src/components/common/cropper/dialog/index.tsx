@@ -10,11 +10,12 @@ import classNames from "classnames";
 export type CropperDialogProps = DialogProps & {
   src?: string;
   cropperClassName?: string;
+  aspectRatio?: number;
   onCrop: (dataURL: string) => void;
 };
 
 export const CropperDialog: FC<CropperDialogProps> = (props) => {
-  const { visible, src, onCancel, onCrop, ...rest } = props;
+  const { visible, src, onCancel, onCrop, aspectRatio, ...rest } = props;
   const { t } = useTranslation();
   const cropperRef = useRef<ReactCropperElement>(null);
 
@@ -27,7 +28,12 @@ export const CropperDialog: FC<CropperDialogProps> = (props) => {
   return (
     <Dialog maskClosable={false} title={t("裁剪图片")} visible={visible} {...rest}>
       <div className="-mb-2 flex flex-col items-center space-y-4">
-        <Cropper className={classNames("max-h-[80vh] w-full", props.cropperClassName)} ref={cropperRef} src={src} />
+        <Cropper
+          aspectRatio={aspectRatio}
+          className={classNames("max-h-[80vh] w-full", props.cropperClassName)}
+          ref={cropperRef}
+          src={src}
+        />
         <div className="flex w-full justify-end space-x-2">
           <Button onClick={crop}>{t("确定")}</Button>
           <Button onClick={onCancel} variant="outline">

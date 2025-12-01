@@ -3,10 +3,10 @@ import { Column, Entity } from "typeorm";
 import { SnowflakeId } from "@meta-1/nest-common";
 
 @Entity({
-  name: "repository",
+  name: "wiki_repo",
   comment: "知识库",
 })
-export class Repository {
+export class WikiRepo {
   @SnowflakeId()
   id: string;
 
@@ -20,7 +20,6 @@ export class Repository {
   @Column({
     type: "varchar",
     length: 500,
-    nullable: false,
     comment: "访问路径",
   })
   path: string;

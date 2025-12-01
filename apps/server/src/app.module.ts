@@ -13,6 +13,7 @@ import { MessageModule } from "@meta-1/nest-message";
 import { NacosModule } from "@meta-1/nest-nacos";
 import { SecurityModule } from "@meta-1/nest-security";
 import { AccountModule, AuthGuard } from "@meta-1/wiki-account";
+import { KnowledgeBaseModule } from "@meta-1/wiki-kb";
 import { AssetsController, ConfigController, MailCodeController } from "./controller";
 import type { AppConfig } from "./shared";
 
@@ -80,7 +81,15 @@ export class AppModule {
 
     return {
       module: AppModule,
-      imports: [...imports, CommonModule, MessageModule, SecurityModule, AssetsModule, AccountModule],
+      imports: [
+        ...imports,
+        CommonModule,
+        MessageModule,
+        SecurityModule,
+        AssetsModule,
+        AccountModule,
+        KnowledgeBaseModule,
+      ],
       controllers: [AssetsController, ConfigController, MailCodeController],
       providers: [
         {

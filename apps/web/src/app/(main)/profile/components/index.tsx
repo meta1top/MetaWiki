@@ -10,7 +10,7 @@ import { TitleBar } from "@/components/common/page/title-bar";
 import { useLayoutConfig } from "@/components/layout/hooks";
 import type { MainLayoutProps } from "@/components/layout/main";
 
-export const Profile = () => {
+export const Page = () => {
   useLayoutConfig<MainLayoutProps>({
     active: "profile",
   });
