@@ -1,4 +1,25 @@
 {
   "测试": "Test",
-  "MetaWiki": "MetaWiki"
+  "MetaWiki": "MetaWiki",
+  "删除知识库": "Delete Repository",
+  "确定要删除知识库「{{name}}」吗？此操作不可恢复。": "Are you sure you want to delete repository \"{{name}}\"? This action cannot be undone.",
+  "删除成功": "Deleted successfully",
+  "删除失败": "Delete failed",
+  "编辑": "Edit",
+  "删除": "Delete",
+  "确定": "Confirm",
+  "取消": "Cancel",
+  "更新成功": "Updated successfully",
+  "更新失败": "Update failed",
+  "编辑知识库": "Edit Repository",
+  "知识库名称": "Repository Name",
+  "请输入知识库名称": "Please enter repository name",
+  "描述": "Description",
+  "请输入描述": "Please enter description",
+  "封面": "Cover",
+  "创建知识库": "Create Repository",
+  "访问路径": "Access Path",
+  "请输入访问路径": "Please enter access path",
+  "知识库": "Repository",
+  "暂无知识库，请创建": "No repositories yet, please create one"
 }

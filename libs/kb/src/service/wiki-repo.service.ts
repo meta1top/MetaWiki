@@ -23,7 +23,7 @@ export class WikiRepoService {
   async create(dto: CreateWikiRepoDto, creatorId: string): Promise<void> {
     // 检查访问路径是否已存在
     const existingRepo = await this.repository.findOne({
-      where: { path: dto.path },
+      where: { path: dto.path, deleted: false },
     });
 
     if (existingRepo) {
@@ -42,7 +42,7 @@ export class WikiRepoService {
 
   async list(creatorId: string): Promise<WikiRepo[]> {
     const repos = await this.repository.find({
-      where: { creatorId },
+      where: { creatorId, deleted: false },
       order: { updateTime: "DESC", createTime: "DESC" },
     });
 
@@ -57,7 +57,7 @@ export class WikiRepoService {
 
   async getByPath(path: string): Promise<WikiRepoDetail> {
     const repo = await this.repository.findOne({
-      where: { path },
+      where: { path, deleted: false },
       select: ["cover", "name", "path", "description"],
     });
 
@@ -71,7 +71,7 @@ export class WikiRepoService {
   @Transactional()
   async update(id: string, dto: UpdateWikiRepoDto, userId: string): Promise<void> {
     const repo = await this.repository.findOne({
-      where: { id },
+      where: { id, deleted: false },
     });
 
     if (!repo) {
@@ -93,7 +93,7 @@ export class WikiRepoService {
   @Transactional()
   async delete(id: string, userId: string): Promise<void> {
     const repo = await this.repository.findOne({
-      where: { id },
+      where: { id, deleted: false },
     });
 
     if (!repo) {
@@ -104,6 +104,6 @@ export class WikiRepoService {
       throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
     }
 
-    await this.repository.remove(repo);
+    await this.repository.update({ id }, { deleted: true });
   }
 }

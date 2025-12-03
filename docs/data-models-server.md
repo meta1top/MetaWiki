@@ -73,6 +73,7 @@ MetaWiki Server 使用 TypeORM 作为 ORM 框架，MySQL 作为关系型数据�
 | `updater_id` | varchar(20) | 更新人ID | NULLABLE |
 | `update_time` | datetime | 更新时间 | NULLABLE, ON UPDATE CURRENT_TIMESTAMP |
 | `cover` | varchar(500) | 封面URL | NULLABLE |
+| `deleted` | tinyint(1) | 是否已删除 | DEFAULT false, select: false |
 
 **关系**:
 - 多对一: Account (通过 creatorId, updaterId)
@@ -115,7 +116,7 @@ database:
 
 ## 软删除
 
-Account 实体支持软删除（`deleted` 字段），删除的记录不会物理删除，但查询时会被过滤（`select: false`）。
+Account 和 WikiRepo 实体支持软删除（`deleted` 字段），删除的记录不会物理删除，但查询时会被过滤（`select: false`）。删除操作会将 `deleted` 字段设置为 `true`，所有查询方法都会自动过滤已删除的记录。
 
 ---
 

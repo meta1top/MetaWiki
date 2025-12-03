@@ -79,7 +79,7 @@ export const RepoItem: FC<RepoItemProps> = ({ repo, onSuccess }) => {
   const handleDelete = useCallback(() => {
     alert.confirm({
       title: t("删除知识库"),
-      description: t("确定要删除知识库「{name}」吗？此操作不可恢复。", { name: repo.name }),
+      description: t("确定要删除知识库「{{name}}」吗？此操作不可恢复。", { name: repo.name }),
       onOk: async () => {
         deleteMutate();
         return true;

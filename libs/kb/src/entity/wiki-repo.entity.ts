@@ -68,4 +68,13 @@ export class WikiRepo {
     comment: "封面",
   })
   cover: string | null;
+
+  @Column({
+    type: "tinyint",
+    width: 1,
+    default: false,
+    select: false,
+    comment: "是否已删除",
+  })
+  deleted: boolean;
 }

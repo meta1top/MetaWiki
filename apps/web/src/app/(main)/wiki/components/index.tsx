@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { Empty } from "@meta-1/design";
 import { WikiBreadcrumb } from "@/components/common/breadcrumb/wiki";
 import { MainPage } from "@/components/common/page";
 import { PageHeader } from "@/components/common/page/header";
@@ -52,9 +53,7 @@ export const Page = () => {
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-16">
-            <p className="text-muted-foreground">{t("暂无知识库，请创建")}</p>
-          </div>
+          <Empty text={t("暂无知识库，请创建")} />
         )}
       </div>
     </MainPage>
