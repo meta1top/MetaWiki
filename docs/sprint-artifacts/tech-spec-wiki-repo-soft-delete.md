@@ -1,7 +1,8 @@
 # Tech-Spec: 知识库逻辑删除与删除弹窗修复
 
 **Created:** 2025-12-03  
-**Status:** Ready for Development
+**Completed:** 2025-12-03  
+**Status:** Completed
 
 ## Overview
 
@@ -93,63 +94,80 @@
 
 ### Tasks
 
-- [ ] Task 1: 更新 WikiRepo 实体，添加 `deleted` 字段
+- [x] Task 1: 更新 WikiRepo 实体，添加 `deleted` 字段 ✅
   - 在 `libs/kb/src/entity/wiki-repo.entity.ts` 中添加 `deleted` 字段
   - 配置：`type: "tinyint", width: 1, default: false, select: false, comment: "是否已删除"`
+  - **已完成**：实体字段已添加（第72-79行）
 
-- [ ] Task 2: 修改删除方法，从物理删除改为逻辑删除
+- [x] Task 2: 修改删除方法，从物理删除改为逻辑删除 ✅
   - 在 `libs/kb/src/service/wiki-repo.service.ts` 的 `delete()` 方法中
   - 将 `await this.repository.remove(repo)` 改为 `await this.repository.update({ id }, { deleted: true })`
   - 在查找 repo 时添加 `deleted: false` 条件
+  - **已完成**：删除方法已改为逻辑删除（第107行），查找时已添加过滤条件（第96行）
 
-- [ ] Task 3: 更新所有查询方法，添加软删除过滤
+- [x] Task 3: 更新所有查询方法，添加软删除过滤 ✅
   - `list()` 方法：添加 `deleted: false` 条件
   - `getByPath()` 方法：添加 `deleted: false` 条件
   - `update()` 方法：在查找时添加 `deleted: false` 条件
+  - **已完成**：所有查询方法均已添加 `deleted: false` 过滤条件
+    - `create()`: 第26行
+    - `list()`: 第45行
+    - `getByPath()`: 第60行
+    - `update()`: 第74行
+    - `delete()`: 第96行
 
-- [ ] Task 4: 更新类型定义（可选）
+- [ ] Task 4: 更新类型定义（可选）⏭️
   - 如果前端需要知道 deleted 状态，更新 `libs/types/src/wiki/wiki-repo.schema.ts`
   - 通常前端不需要知道 deleted 状态（因为查询已过滤）
+  - **已跳过**：根据规范，前端不需要知道 `deleted` 状态，查询已自动过滤
 
-- [ ] Task 5: 修复删除弹窗显示问题
+- [x] Task 5: 修复删除弹窗显示问题 ✅
   - 检查 `apps/web/src/app/(main)/wiki/components/item/index.tsx` 第82行
   - 检查国际化文件 `locales/zh-CN.json` 和 `locales/en.json`
   - 确保翻译键 `"确定要删除知识库「{name}」吗？此操作不可恢复。"` 存在
   - 验证 `repo.name` 是否正确传递
+  - **已完成**：删除弹窗配置正确，国际化翻译键存在，参数传递正确（第82行）
 
-- [ ] Task 6: 更新数据模型文档
+- [x] Task 6: 更新数据模型文档 ✅
   - 更新 `docs/data-models-server.md`，在 WikiRepo 实体说明中添加 `deleted` 字段
+  - **已完成**：文档已更新，包含 `deleted` 字段说明（第76行）
 
-- [ ] Task 7: 数据库迁移（如需要）
+- [x] Task 7: 数据库迁移（如需要）✅
   - 如果使用 TypeORM Migrations，创建迁移文件添加 `deleted` 字段
   - 如果使用 `synchronize: true`（开发环境），TypeORM 会自动同步
+  - **已完成**：开发环境使用 `synchronize: true` 时已自动同步；生产环境需手动执行迁移
 
 ### Acceptance Criteria
 
-- [ ] AC 1: 删除知识库时，数据库记录不被物理删除，`deleted` 字段被设置为 `true`
+- [x] AC 1: 删除知识库时，数据库记录不被物理删除，`deleted` 字段被设置为 `true` ✅
   - Given: 用户点击删除知识库
   - When: 删除操作成功执行
   - Then: 数据库中的记录仍然存在，但 `deleted` 字段为 `true`
+  - **已验证**：删除方法使用 `repository.update({ id }, { deleted: true })` 实现逻辑删除
 
-- [ ] AC 2: 已删除的知识库不会出现在列表中
+- [x] AC 2: 已删除的知识库不会出现在列表中 ✅
   - Given: 存在已删除的知识库（`deleted = true`）
   - When: 用户查看知识库列表
   - Then: 已删除的知识库不显示在列表中
+  - **已验证**：`list()` 方法已添加 `deleted: false` 过滤条件
 
-- [ ] AC 3: 已删除的知识库无法通过路径访问
+- [x] AC 3: 已删除的知识库无法通过路径访问 ✅
   - Given: 存在已删除的知识库（`deleted = true`）
   - When: 用户尝试通过路径访问该知识库
   - Then: 返回 `REPOSITORY_NOT_FOUND` 错误
+  - **已验证**：`getByPath()` 方法已添加 `deleted: false` 过滤条件
 
-- [ ] AC 4: 删除弹窗正确显示知识库名称
+- [x] AC 4: 删除弹窗正确显示知识库名称 ✅
   - Given: 用户点击删除按钮
   - When: 删除确认弹窗显示
   - Then: 弹窗中正确显示知识库的名称（例如："确定要删除知识库「我的知识库」吗？"）
+  - **已验证**：删除弹窗使用正确的国际化翻译键和参数传递
 
-- [ ] AC 5: 只有创建者可以删除知识库（权限检查保持不变）
+- [x] AC 5: 只有创建者可以删除知识库（权限检查保持不变）✅
   - Given: 非创建者用户尝试删除知识库
   - When: 删除操作执行
   - Then: 返回 `REPOSITORY_ACCESS_DENIED` 错误
+  - **已验证**：删除方法保留了权限检查逻辑（第103-105行）
 
 ## Additional Context
 
@@ -194,4 +212,28 @@
 4. **国际化**：
    - 确保所有语言文件都包含删除弹窗的翻译
    - 检查翻译参数是否正确传递
+
+## Implementation Summary
+
+### 实现完成情况
+
+✅ **已完成**：所有核心功能已实现
+
+1. **实体层**：WikiRepo 实体已添加 `deleted` 字段，配置符合规范
+2. **服务层**：所有查询方法已添加软删除过滤，删除方法已改为逻辑删除
+3. **前端**：删除弹窗显示正常，国际化翻译正确
+4. **文档**：数据模型文档已更新
+
+### 关键实现点
+
+- **软删除字段**：`deleted` 字段使用 `select: false` 配置，确保默认查询时自动过滤
+- **查询一致性**：所有查询方法显式添加 `deleted: false` 条件，确保一致性
+- **权限保持**：删除操作的权限检查逻辑保持不变，只有创建者可以删除
+- **国际化**：删除弹窗的翻译键和参数传递正确
+
+### 注意事项
+
+- **数据库迁移**：生产环境如需迁移，需要手动添加 `deleted` 字段并为现有记录设置默认值 `false`
+- **类型定义**：前端类型定义未包含 `deleted` 字段（符合规范，前端不需要知道此状态）
+- **扩展性**：未来可考虑添加 `deletedAt` 字段记录删除时间，以及恢复功能
 

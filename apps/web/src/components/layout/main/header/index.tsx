@@ -3,6 +3,7 @@ import classNames from "classnames";
 import { useAtomValue } from "jotai";
 import { Info, Settings } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 import { Action, Button } from "@meta-1/design";
@@ -24,6 +25,7 @@ export const Header: FC<HeaderProps> = (props) => {
   const { logoUrl = "/", appName = "MetaWiki", profileExtra, className, active } = props;
   const isLogin = useAtomValue(isLoginState);
   const { t } = useTranslation();
+  const router = useRouter();
 
   const logo = useMemo(() => {
     return (
@@ -62,7 +64,7 @@ export const Header: FC<HeaderProps> = (props) => {
         {isLogin ? (
           <>
             <Notice />
-            <Action className="!outline-none">
+            <Action className="!outline-none" onClick={() => router.push("/setting/provider")}>
               <Settings className="size-4" />
             </Action>
             <Action className="!outline-none">

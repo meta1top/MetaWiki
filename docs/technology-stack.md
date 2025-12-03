@@ -135,6 +135,17 @@
 
 ### 集成方式
 - **REST API**: Web 通过 REST API 调用 Server
-- **共享类型**: 通过 @meta-1/wiki-types 共享类型定义
+- **共享类型**: 通过 `@meta-1/wiki-types` 共享类型定义
 - **Monorepo**: 使用 pnpm workspace 管理多包项目
+
+### 类型包名规范
+
+**项目特定类型包**:
+- Wiki 项目: `@meta-1/wiki-types`
+- Authub 项目: `@meta-1/authub-types`
+
+**公共组件共享类型**:
+- `@meta-1/nest-types` - Meta1 Support 提供的公共组件共享类型
+
+**注意**: `@meta-1/types` 不存在，不要使用。
 

@@ -232,6 +232,55 @@ pnpm test:e2e
 
 ## 代码规范
 
+### 类型包名使用规则
+
+**重要**: 在导入类型定义时，必须使用正确的包名，避免使用不存在的包名。
+
+#### 类型包名规范
+
+1. **项目特定类型包**（每个项目有自己的前缀）:
+   - **Wiki 项目**: `@meta-1/wiki-types`
+   - **Authub 项目**: `@meta-1/authub-types`
+   - **其他项目**: `@meta-1/{project-name}-types`
+
+2. **公共组件共享类型**（来自 support 项目）:
+   - `@meta-1/nest-types` - Meta1 Support 提供的公共组件共享类型
+
+3. **不存在的包名**（禁止使用）:
+   - ❌ `@meta-1/types` - **此包不存在，不要使用**
+
+#### 使用示例
+
+**正确示例**（Wiki 项目）:
+
+```typescript
+// ✅ 正确：使用项目特定的类型包
+import type { WikiRepo, ModelProvider } from "@meta-1/wiki-types";
+import { WikiRepoSchema, ModelProviderSchema } from "@meta-1/wiki-types";
+
+// ✅ 正确：使用公共组件共享类型
+import type { RestResult } from "@meta-1/nest-types";
+```
+
+**错误示例**:
+
+```typescript
+// ❌ 错误：@meta-1/types 不存在
+import type { WikiRepo } from "@meta-1/types";
+```
+
+#### 类型定义位置
+
+- **项目特定类型**: 定义在 `libs/types/src/` 目录下
+- **公共组件类型**: 定义在 `support/libs/types/src/` 目录下，通过 `@meta-1/nest-types` 导出
+
+#### 注意事项
+
+- 在创建新的类型定义时，确保在正确的项目中创建
+- 跨项目共享的类型应放在 support 项目中
+- 项目特定的类型应放在各自项目的 `libs/types/` 目录下
+- 导入类型时，始终检查包名是否正确
+
 ### 代码检查
 
 ```bash

@@ -13,6 +13,7 @@ import { MessageModule } from "@meta-1/nest-message";
 import { NacosModule } from "@meta-1/nest-nacos";
 import { SecurityModule } from "@meta-1/nest-security";
 import { AccountModule, AuthGuard } from "@meta-1/wiki-account";
+import { AiModule } from "@meta-1/wiki-ai";
 import { KnowledgeBaseModule } from "@meta-1/wiki-kb";
 import { AssetsController, ConfigController, MailCodeController } from "./controller";
 import type { AppConfig } from "./shared";
@@ -88,6 +89,7 @@ export class AppModule {
         SecurityModule,
         AssetsModule,
         AccountModule,
+        AiModule,
         KnowledgeBaseModule,
       ],
       controllers: [AssetsController, ConfigController, MailCodeController],

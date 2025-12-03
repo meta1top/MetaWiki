@@ -604,6 +604,11 @@ pnpm test:e2e
 - **共享类型**: 通过 `@meta-1/wiki-types` 共享类型定义
 - **国际化**: 共享 `locales/` 目录
 
+**类型包名说明**:
+- ✅ `@meta-1/wiki-types` - Wiki 项目特定类型（正确）
+- ✅ `@meta-1/nest-types` - Meta1 Support 公共组件共享类型（正确）
+- ❌ `@meta-1/types` - 此包不存在，不要使用
+
 ### 与外部服务的集成
 
 - **Nacos**: 配置管理和服务发现

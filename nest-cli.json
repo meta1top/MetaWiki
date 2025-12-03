@@ -21,6 +21,15 @@
         "tsConfigPath": "libs/account/tsconfig.lib.json"
       }
     },
+    "ai": {
+      "type": "library",
+      "root": "libs/ai",
+      "entryFile": "index",
+      "sourceRoot": "libs/ai/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/ai/tsconfig.lib.json"
+      }
+    },
     "kb": {
       "type": "library",
       "root": "libs/kb",

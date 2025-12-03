@@ -4,4 +4,5 @@ export * from "./use.encrypt";
 export * from "./use.locale";
 export * from "./use.mutation";
 export * from "./use.profile";
+export * from "./use.provider.platform";
 export * from "./use.query";
