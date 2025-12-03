@@ -106,6 +106,208 @@ Component (React)
                   Server
 ```
 
+## 实施模式
+
+### 命名约定
+
+为确保代码一致性和可维护性，项目遵循以下命名约定：
+
+#### 文件命名
+
+- **页面文件**: `page.tsx`（Next.js App Router 约定）
+- **布局文件**: `layout.tsx`（Next.js App Router 约定）
+- **组件文件**: `{ComponentName}.tsx`（PascalCase）
+  - 示例: `RegisterPage.tsx`, `WikiList.tsx`, `EmailCodeInput.tsx`
+- **Hook 文件**: `use{Feature}.ts`（camelCase，以 `use` 开头）
+  - 示例: `useAuth.ts`, `useWiki.ts`, `useEncrypt.ts`
+- **API 客户端文件**: `{module}.ts`（kebab-case）
+  - 示例: `account.ts`, `wiki-repo.ts`
+- **状态文件**: `{feature}.ts`（kebab-case）
+  - 示例: `access.ts`, `config.ts`, `wiki.ts`
+- **类型文件**: `{module}.types.ts`（kebab-case）
+  - 示例: `account.types.ts`, `wiki.types.ts`
+- **工具文件**: `{feature}.ts`（kebab-case）
+  - 示例: `rest.ts`, `token.ts`, `query.ts`
+
+#### 组件命名
+
+- **页面组件**: `{Page}Page`（PascalCase，以 `Page` 结尾）
+  - 示例: `RegisterPage`, `LoginPage`, `WikiPage`
+- **布局组件**: `{Layout}Layout`（PascalCase，以 `Layout` 结尾）
+  - 示例: `RootLayout`, `MainLayout`, `LoginLayout`
+- **功能组件**: `{Feature}`（PascalCase）
+  - 示例: `WikiList`, `WikiItem`, `EmailCodeInput`
+- **通用组件**: `{Component}`（PascalCase）
+  - 示例: `Button`, `Input`, `Form`, `Dialog`
+
+#### 变量和函数命名
+
+- **变量**: `camelCase`
+  - 示例: `userData`, `wikiList`, `isLoading`
+- **函数**: `camelCase`
+  - 示例: `handleSubmit()`, `fetchWikiList()`, `validateEmail()`
+- **Hook**: `use{Feature}`（camelCase，以 `use` 开头）
+  - 示例: `useAuth()`, `useWiki()`, `useMutation()`
+- **常量**: `UPPER_SNAKE_CASE`
+  - 示例: `MAX_RETRY_COUNT`, `DEFAULT_TIMEOUT`
+- **状态变量**: `camelCase`（通常以 `is`、`has`、`should` 开头表示布尔值）
+  - 示例: `isLoading`, `hasError`, `shouldRefresh`
+
+#### 目录命名
+
+- **路由目录**: `{route}/`（kebab-case）
+  - 示例: `(login)/`, `(main)/`, `wiki/`
+- **组件目录**: `{feature}/`（kebab-case）
+  - 示例: `layout/`, `common/`, `wiki/`
+- **Hook 目录**: `hooks/`（固定名称）
+- **API 客户端目录**: `rest/`（固定名称）
+- **状态目录**: `state/`（固定名称）
+
+#### 路由命名
+
+- **页面路由**: 基于文件系统路由（Next.js App Router）
+  - 示例: `app/(login)/login/page.tsx` → `/login`
+  - 示例: `app/(main)/wiki/page.tsx` → `/wiki`
+- **路由组**: `(group-name)/`（括号包裹，不影响 URL）
+  - 示例: `(login)/`, `(main)/`, `(wiki)/`
+
+### 错误处理模式
+
+#### API 错误响应格式
+
+前端通过 REST API 接收统一的错误响应格式：
+
+```typescript
+interface ErrorResponse {
+  code: number;           // 错误码（数字）
+  success: false;         // 固定为 false
+  message: string;        // 错误消息（可国际化）
+  data: unknown | null;   // 错误详情数据（可选）
+  timestamp: string;      // ISO 8601 时间戳
+  path: string;           // 请求路径
+}
+```
+
+#### REST 客户端错误处理
+
+使用统一的 REST 客户端（`apps/web/src/utils/rest.ts`）进行 API 调用：
+
+```typescript
+import { get, post } from "@/utils/rest";
+import type { WikiRepo } from "@meta-1/wiki-types";
+
+// GET 请求
+export const listRepo = () => get<WikiRepo[], null>("@api/wiki/repo/list", null);
+
+// POST 请求
+export const createRepo = (data: CreateWikiRepoData) => 
+  post<WikiRepo, CreateWikiRepoData>("@api/wiki/repo/create", data);
+```
+
+**REST 客户端特性**:
+- 自动添加认证 Header（JWT Token）
+- 统一错误处理（抛出 `RestError`）
+- 类型安全（TypeScript 类型推断）
+- 别名映射（`@api` → `/api`）
+
+#### TanStack Query 错误处理
+
+使用封装的 `useQuery` 和 `useMutation` Hook 进行数据获取和变更：
+
+```typescript
+import { useQuery, useMutation } from "@/hooks";
+import { listRepo } from "@/rest/wiki/repo";
+
+// Query 示例
+const { data, isLoading, error } = useQuery({
+  queryKey: ["wiki-repo-list"],
+  queryFn: () => listRepo(),
+});
+
+// Mutation 示例
+const { mutate, isPending, error } = useMutation({
+  mutationFn: createRepo,
+  onSuccess: (data) => {
+    // 成功处理
+    console.log("创建成功", data);
+  },
+  onError: (error) => {
+    // 错误处理（已全局处理，此处可自定义）
+    console.error("创建失败", error);
+  },
+});
+```
+
+**全局错误处理**:
+- TanStack Query 封装了全局错误处理
+- 错误会自动显示错误提示（通过 UI 组件）
+- 支持自定义错误处理逻辑（`onError` 回调）
+
+#### 错误类型
+
+前端定义 `RestError` 类用于错误处理：
+
+```typescript
+export class RestError extends Error {
+  code: number;
+  message: string;
+  data: unknown;
+  timestamp: string;
+  path: string;
+
+  constructor(response: ErrorResponse) {
+    super(response.message);
+    this.code = response.code;
+    this.message = response.message;
+    this.data = response.data;
+    this.timestamp = response.timestamp;
+    this.path = response.path;
+  }
+}
+```
+
+#### 表单验证错误处理
+
+使用 React Hook Form + Zod Schema 进行表单验证：
+
+```typescript
+import { Form, FormItem } from "@meta-1/design";
+import { RegisterSchema, type RegisterData } from "@meta-1/wiki-types";
+
+<Form<RegisterData>
+  onSubmit={handleSubmit}
+  schema={RegisterSchema}  // Zod Schema 自动验证
+>
+  <FormItem label="邮箱" name="email">
+    <Input placeholder="请输入邮箱" />
+  </FormItem>
+  {/* 验证错误自动显示 */}
+</Form>
+```
+
+**验证错误显示**:
+- 字段级错误自动显示在表单项下方
+- 使用国际化消息（`locales/`）
+- 支持自定义错误消息
+
+#### 状态管理错误处理
+
+**Jotai 状态错误**:
+- 使用 `atom` 定义状态，错误通过组件状态管理
+- 错误状态通常存储在独立的 `errorAtom` 中
+
+**TanStack Query 状态错误**:
+- 错误自动存储在 Query 状态中
+- 通过 `error` 对象访问错误信息
+- 支持错误重试机制（自动或手动）
+
+#### 用户友好的错误提示
+
+- **Toast 通知**: 使用 UI 组件库的 Toast 组件显示错误
+- **表单错误**: 在表单项下方显示字段级错误
+- **页面级错误**: 使用 Error Boundary 捕获渲染错误
+- **国际化**: 所有错误消息支持多语言（中文/英文）
+
 ## 数据架构
 
 ### 状态管理

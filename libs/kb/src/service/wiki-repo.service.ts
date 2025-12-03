@@ -5,7 +5,7 @@ import { Repository } from "typeorm";
 import { AppError, Transactional, WithLock } from "@meta-1/nest-common";
 import type { WikiRepo, WikiRepoDetail } from "@meta-1/wiki-types";
 import { WikiRepoDetailSchema, WikiRepoSchema } from "@meta-1/wiki-types";
-import { CreateWikiRepoDto } from "../dto";
+import { CreateWikiRepoDto, UpdateWikiRepoDto } from "../dto";
 import { WikiRepo as WikiRepoEntity } from "../entity";
 import { ErrorCode } from "../shared";
 
@@ -15,8 +15,8 @@ export class WikiRepoService {
 
   @WithLock({
     key: "wiki-repo:create:#{path}",
-    ttl: 10000, // 10 秒
-    waitTimeout: 2000, // 等待 2 秒
+    ttl: 10000,
+    waitTimeout: 2000,
     errorMessage: "知识库创建中，请稍后重试",
   })
   @Transactional()
@@ -66,5 +66,44 @@ export class WikiRepoService {
     }
 
     return WikiRepoDetailSchema.parse(repo);
+  }
+
+  @Transactional()
+  async update(id: string, dto: UpdateWikiRepoDto, userId: string): Promise<void> {
+    const repo = await this.repository.findOne({
+      where: { id },
+    });
+
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+
+    if (repo.creatorId !== userId) {
+      throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
+    }
+
+    // path 字段不允许修改，只更新 name、description、cover
+    await this.repository.update(id, {
+      ...dto,
+      updaterId: userId,
+      updateTime: new Date(),
+    });
+  }
+
+  @Transactional()
+  async delete(id: string, userId: string): Promise<void> {
+    const repo = await this.repository.findOne({
+      where: { id },
+    });
+
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+
+    if (repo.creatorId !== userId) {
+      throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
+    }
+
+    await this.repository.remove(repo);
   }
 }

@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser, type SessionUser } from "@meta-1/nest-security";
 import type { WikiRepo, WikiRepoDetail } from "@meta-1/wiki-types";
-import { CreateWikiRepoDto, WikiRepoDetailDto, WikiRepoDto } from "../dto";
+import { CreateWikiRepoDto, UpdateWikiRepoDto, WikiRepoDetailDto, WikiRepoDto } from "../dto";
 import { WikiRepoService } from "../service";
 
 @ApiTags("WikiRepoController")
@@ -36,5 +36,27 @@ export class WikiRepoController {
   })
   getByPath(@Param("path") path: string): Promise<WikiRepoDetail> {
     return this.wikiRepoService.getByPath(path);
+  }
+
+  @Patch("/:id")
+  @ApiOperation({ summary: "更新知识库" })
+  @ApiParam({ name: "id", description: "知识库ID" })
+  @ApiResponse({
+    status: 200,
+    description: "更新成功",
+  })
+  update(@Param("id") id: string, @Body() dto: UpdateWikiRepoDto, @CurrentUser() user: SessionUser): Promise<void> {
+    return this.wikiRepoService.update(id, dto, user.id);
+  }
+
+  @Delete("/:id")
+  @ApiOperation({ summary: "删除知识库" })
+  @ApiParam({ name: "id", description: "知识库ID" })
+  @ApiResponse({
+    status: 200,
+    description: "删除成功",
+  })
+  delete(@Param("id") id: string, @CurrentUser() user: SessionUser): Promise<void> {
+    return this.wikiRepoService.delete(id, user.id);
   }
 }

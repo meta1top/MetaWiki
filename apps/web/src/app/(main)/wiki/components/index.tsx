@@ -48,7 +48,7 @@ export const Page = () => {
         ) : repos && repos.length > 0 ? (
           <div className="grid grid-cols-1 gap-md md:grid-cols-2 lg:grid-cols-3">
             {repos.map((repo) => (
-              <RepoItem key={repo.id} repo={repo} />
+              <RepoItem key={repo.id} onSuccess={onSuccess} repo={repo} />
             ))}
           </div>
         ) : (

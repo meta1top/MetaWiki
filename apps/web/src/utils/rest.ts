@@ -132,6 +132,15 @@ export function put<T, D = undefined>(url: string, data?: D, config?: AxiosReque
   });
 }
 
+export function patch<T, D = undefined>(url: string, data?: D, config?: AxiosRequestConfig): Promise<RestResult<T>> {
+  return request({
+    ...config,
+    url,
+    method: "patch",
+    data,
+  });
+}
+
 export function del<T, D = undefined>(url: string, data?: D, config?: AxiosRequestConfig): Promise<RestResult<T>> {
   return request({
     ...config,

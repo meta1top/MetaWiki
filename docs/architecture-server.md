@@ -97,6 +97,201 @@ export class AccountService {
 }
 ```
 
+## 实施模式
+
+### 命名约定
+
+为确保代码一致性和可维护性，项目遵循以下命名约定：
+
+#### 文件命名
+
+- **Controller 文件**: `{module}.controller.ts` 或 `{module}-{feature}.controller.ts`（kebab-case）
+  - 示例: `account.controller.ts`, `account-token.controller.ts`
+- **Service 文件**: `{module}.service.ts` 或 `{module}-{feature}.service.ts`（kebab-case）
+  - 示例: `account.service.ts`, `account-otp.service.ts`
+- **DTO 文件**: `{module}.dto.ts` 或 `{module}-{feature}.dto.ts`（kebab-case）
+  - 示例: `account.dto.ts`, `account-token.dto.ts`
+- **Entity 文件**: `{entity}.entity.ts`（kebab-case）
+  - 示例: `account.entity.ts`, `wiki-repo.entity.ts`
+- **错误码文件**: `{module}.error-code.ts`（kebab-case）
+  - 示例: `account.error-code.ts`, `kb.error-code.ts`
+- **类型文件**: `{module}.types.ts` 或 `{module}.schema.ts`（kebab-case）
+  - 示例: `account.types.ts`, `wiki-repo.schema.ts`
+- **索引文件**: `index.ts`（统一导出）
+
+#### 类命名
+
+- **Controller 类**: `{Module}Controller`（PascalCase）
+  - 示例: `AccountController`, `AccountTokenController`
+- **Service 类**: `{Module}Service` 或 `{Module}{Feature}Service`（PascalCase）
+  - 示例: `AccountService`, `AccountOtpService`
+- **DTO 类**: `{Module}Dto` 或 `{Module}{Feature}Dto`（PascalCase）
+  - 示例: `AccountDto`, `LoginDto`, `RegisterDto`
+- **Entity 类**: `{Entity}`（PascalCase）
+  - 示例: `Account`, `WikiRepo`
+- **Guard 类**: `{Feature}Guard`（PascalCase）
+  - 示例: `AuthGuard`
+
+#### 变量和函数命名
+
+- **变量**: `camelCase`
+  - 示例: `accountService`, `userRepository`, `configService`
+- **函数**: `camelCase`
+  - 示例: `findByEmail()`, `createAccount()`, `validateToken()`
+- **常量**: `UPPER_SNAKE_CASE`
+  - 示例: `MAX_RETRY_COUNT`, `DEFAULT_TIMEOUT`
+- **私有成员**: `private` 关键字 + `camelCase`
+  - 示例: `private readonly accountService: AccountService`
+
+#### 目录命名
+
+- **模块目录**: `{module}/`（kebab-case）
+  - 示例: `account/`, `kb/`, `wiki-repo/`
+- **功能目录**: `{feature}/`（kebab-case）
+  - 示例: `controller/`, `service/`, `dto/`, `entity/`, `guards/`
+
+#### API 端点命名
+
+- **REST 端点**: `/api/{module}` 或 `/api/{module}/{resource}`（kebab-case，复数形式）
+  - 示例: `/api/account`, `/api/wiki/repo`
+- **路由参数**: `:id` 或 `{id}`（小写）
+  - 示例: `/api/wiki/repo/:id`
+
+### 错误处理模式
+
+#### 统一错误响应格式
+
+所有 API 错误响应遵循统一格式：
+
+```typescript
+interface ErrorResponse {
+  code: number;           // 错误码（数字）
+  success: false;         // 固定为 false
+  message: string;        // 错误消息（可国际化）
+  data: unknown | null;   // 错误详情数据（可选）
+  timestamp: string;      // ISO 8601 时间戳
+  path: string;           // 请求路径
+}
+```
+
+**成功响应格式**:
+
+```typescript
+interface SuccessResponse<T> {
+  code: 0;               // 成功时固定为 0
+  success: true;         // 固定为 true
+  message: "success";    // 固定为 "success"
+  data: T;              // 业务数据
+  timestamp: string;     // ISO 8601 时间戳
+  path: string;         // 请求路径
+}
+```
+
+#### 错误码定义规范
+
+错误码按模块划分范围，确保全局唯一性：
+
+- **0-999**: 通用错误（`@meta-1/nest-common`）
+  - `500`: Server Error
+  - `400`: Validation Failed
+  - `401`: Unauthorized
+  - `403`: Forbidden
+  - `404`: Not Found
+- **1000-1999**: Account 模块错误
+- **2000-2999**: KB（知识库）模块错误
+- **3000-3999**: 其他模块错误（按需分配）
+
+**错误码定义位置**:
+
+- 应用级错误码: `apps/server/src/shared/app.error-code.ts`
+- 模块级错误码: `libs/{module}/src/shared/{module}.error-code.ts`
+
+**错误码定义格式**:
+
+```typescript
+import type { AppErrorCode } from "@meta-1/nest-common";
+
+export const ErrorCode: Record<string, AppErrorCode> = {
+  // 错误码定义，code 需要保证全局唯一
+  REPOSITORY_NOT_FOUND: { code: 2000, message: "知识库未找到" },
+  WIKI_REPO_PATH_EXISTS: { code: 2001, message: "访问路径已存在" },
+  REPOSITORY_ACCESS_DENIED: { code: 2002, message: "无权访问该知识库" },
+} as const;
+```
+
+#### 错误抛出方式
+
+在 Service 层使用 `AppError` 抛出业务错误：
+
+```typescript
+import { AppError } from "@meta-1/nest-common";
+import { ErrorCode } from "../shared/kb.error-code";
+
+@Injectable()
+export class WikiRepoService {
+  async findById(id: string) {
+    const repo = await this.repository.findOne({ where: { id } });
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+    return repo;
+  }
+}
+```
+
+**错误处理流程**:
+
+1. **Service 层**: 抛出 `AppError` 或使用验证框架抛出验证错误
+2. **全局异常过滤器**: `ErrorsFilter` 捕获所有异常
+3. **错误转换**: 将异常转换为统一错误响应格式
+4. **HTTP 响应**: 返回 HTTP 200 状态码，错误信息在响应体中
+
+#### 验证错误处理
+
+使用 Zod Schema 进行数据验证时，验证失败会自动抛出 `ZodValidationException`：
+
+```typescript
+// DTO 定义
+export class CreateWikiRepoDto extends createZodDto(CreateWikiRepoSchema) {}
+
+// Controller 中使用
+@Post("/create")
+create(@Body() dto: CreateWikiRepoDto) {
+  // 验证失败会自动抛出 ZodValidationException
+  return this.wikiRepoService.create(dto);
+}
+```
+
+**验证错误响应格式**:
+
+```json
+{
+  "code": 0,
+  "success": false,
+  "message": "Validation failed",
+  "data": [
+    {
+      "code": "invalid_type",
+      "path": ["email"],
+      "message": "邮箱格式不正确"
+    }
+  ],
+  "timestamp": "2025-12-03T02:19:50.000Z",
+  "path": "/api/wiki/repo/create"
+}
+```
+
+#### 日志记录
+
+- **错误日志**: 使用 NestJS Logger 记录所有异常
+- **日志级别**: 
+  - `error`: 记录所有异常（包括业务错误和系统错误）
+  - `warn`: 记录警告信息
+  - `log`: 记录一般信息
+  - `debug`: 记录调试信息
+
+**日志记录位置**: 全局异常过滤器自动记录所有异常
+
 ## 数据架构
 
 ### 数据库设计
@@ -166,6 +361,8 @@ Server 提供 RESTful API 接口，遵循 REST 规范：
 - `GET /api/wiki/repo/list` - 获取知识库列表
 - `POST /api/wiki/repo/create` - 创建知识库
 - `GET /api/wiki/repo/:path` - 根据路径获取知识库详情
+- `PATCH /api/wiki/repo/:id` - 更新知识库（仅创建者可操作）
+- `DELETE /api/wiki/repo/:id` - 删除知识库（仅创建者可操作）
 
 #### 配置管理 (`/api/config`)
 - `GET /api/config/common` - 获取公共配置（RSA 公钥等）
@@ -225,6 +422,22 @@ interface RestResult<T> {
 - **AccountService**: 账号管理服务
 - **AccountOtpService**: OTP 管理服务
 - **WikiRepoService**: 知识库管理服务
+
+#### Service 层设计原则
+
+**事务管理：**
+
+- 所有涉及多步数据库操作的方法必须使用 `@Transactional()` 装饰器
+- 保证"查询 → 验证 → 操作"的原子性
+- 确保操作失败时能够回滚
+
+**分布式锁：**
+
+- 涉及唯一性检查的创建操作必须使用 `@WithLock()` 装饰器
+- 防止并发创建导致重复数据
+- 锁和事务通常一起使用
+
+详细的使用规范和最佳实践请参考 [开发指南 - Service 层事务和锁管理](../development-guide.md#service-层事务和锁管理)。
 
 ### Entity 层
 

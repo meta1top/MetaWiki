@@ -351,6 +351,154 @@ pnpm install
 - **类型安全**: 充分利用 TypeScript 类型系统
 - **代码复用**: 使用共享库避免重复代码
 
+### Service 层事务和锁管理
+
+#### 事务使用原则
+
+**必须使用 `@Transactional()` 的场景：**
+
+1. **多步数据库操作**：涉及"查询 → 验证 → 更新/删除"的操作流程
+   ```typescript
+   @Transactional()
+   async update(id: string, dto: UpdateDto, userId: string): Promise<void> {
+     // 1. 查询数据
+     const entity = await this.repository.findOne({ where: { id } });
+     // 2. 验证权限或状态
+     if (entity.creatorId !== userId) {
+       throw new AppError(ErrorCode.ACCESS_DENIED);
+     }
+     // 3. 更新数据
+     await this.repository.update(id, dto);
+   }
+   ```
+
+2. **级联操作**：涉及多个实体或表的操作
+   ```typescript
+   @Transactional()
+   async createWithRelations(dto: CreateDto): Promise<void> {
+     const main = await this.mainRepository.save(mainEntity);
+     await this.relationRepository.save({ ...relationEntity, mainId: main.id });
+   }
+   ```
+
+3. **需要回滚的操作**：操作失败时需要保证数据一致性
+   ```typescript
+   @Transactional()
+   async transfer(fromId: string, toId: string, amount: number): Promise<void> {
+     await this.deduct(fromId, amount);
+     await this.add(toId, amount);
+   }
+   ```
+
+**不需要事务的场景：**
+
+- 单一查询操作（`findOne`, `find`, `count`）
+- 简单的单表更新操作（如果不需要先查询验证）
+
+#### 分布式锁使用原则
+
+**必须使用 `@WithLock()` 的场景：**
+
+1. **唯一性检查 + 创建**：防止并发创建导致重复数据
+   ```typescript
+   @WithLock({
+     key: "resource:create:#{path}",
+     ttl: 10000,
+     waitTimeout: 2000,
+     errorMessage: "资源创建中，请稍后重试",
+   })
+   @Transactional()
+   async create(dto: CreateDto): Promise<void> {
+     // 检查唯一性
+     const existing = await this.repository.findOne({ where: { path: dto.path } });
+     if (existing) {
+       throw new AppError(ErrorCode.PATH_EXISTS);
+     }
+     // 创建资源
+     await this.repository.save(entity);
+   }
+   ```
+
+2. **并发修改同一资源**：防止并发更新导致数据不一致
+   ```typescript
+   @WithLock({
+     key: "resource:update:#{id}",
+     ttl: 5000,
+   })
+   @Transactional()
+   async update(id: string, dto: UpdateDto): Promise<void> {
+     // 更新操作
+   }
+   ```
+
+**锁的配置说明：**
+
+- `key`: 锁的键名，使用 `#{param}` 引用方法参数
+- `ttl`: 锁的过期时间（毫秒），防止死锁
+- `waitTimeout`: 等待锁的超时时间（毫秒）
+- `errorMessage`: 获取锁失败时的错误消息
+
+**注意事项：**
+
+- 锁和事务通常一起使用，先加锁再开启事务
+- 锁的 key 应该唯一标识被保护的操作或资源
+- 设置合理的 TTL，避免死锁
+- 更新操作通常不需要锁，除非涉及唯一性检查或复杂业务逻辑
+
+#### 示例：完整的 Service 方法
+
+```typescript
+@Injectable()
+export class WikiRepoService {
+  // 创建：需要锁（唯一性检查）+ 事务
+  @WithLock({
+    key: "wiki-repo:create:#{path}",
+    ttl: 10000,
+    waitTimeout: 2000,
+    errorMessage: "知识库创建中，请稍后重试",
+  })
+  @Transactional()
+  async create(dto: CreateWikiRepoDto, creatorId: string): Promise<void> {
+    const existing = await this.repository.findOne({ where: { path: dto.path } });
+    if (existing) {
+      throw new AppError(ErrorCode.WIKI_REPO_PATH_EXISTS);
+    }
+    await this.repository.save({ ...dto, creatorId });
+  }
+
+  // 更新：需要事务（查询+验证+更新），不需要锁
+  @Transactional()
+  async update(id: string, dto: UpdateWikiRepoDto, userId: string): Promise<void> {
+    const repo = await this.repository.findOne({ where: { id } });
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+    if (repo.creatorId !== userId) {
+      throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
+    }
+    await this.repository.update(id, dto);
+  }
+
+  // 删除：需要事务（查询+验证+删除），不需要锁
+  @Transactional()
+  async delete(id: string, userId: string): Promise<void> {
+    const repo = await this.repository.findOne({ where: { id } });
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+    if (repo.creatorId !== userId) {
+      throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
+    }
+    await this.repository.remove(repo);
+  }
+
+  // 查询：不需要事务和锁
+  async list(creatorId: string): Promise<WikiRepo[]> {
+    return this.repository.find({ where: { creatorId } });
+  }
+}
+```
+
 ### Git 工作流
 
 - 使用有意义的提交信息
