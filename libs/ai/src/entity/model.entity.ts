@@ -14,6 +14,7 @@ export class Model {
   @Column({
     type: "varchar",
     length: 20,
+    name: "provider_id",
     comment: "模型提供商ID",
   })
   providerId: string;
@@ -22,7 +23,7 @@ export class Model {
     () => ModelProvider,
     (provider) => provider.models,
   )
-  @JoinColumn({ name: "providerId" })
+  @JoinColumn({ name: "provider_id" })
   provider: ModelProvider;
 
   @Column({
@@ -45,6 +46,29 @@ export class Model {
     comment: "上下文长度",
   })
   contextLength: number | null;
+
+  @Column({
+    type: "tinyint",
+    width: 1,
+    default: false,
+    comment: "是否支持Function Calling",
+  })
+  functionCalling: boolean;
+
+  @Column({
+    type: "tinyint",
+    width: 1,
+    default: true,
+    comment: "是否启用",
+  })
+  enabled: boolean;
+
+  @Column({
+    type: "text",
+    nullable: true,
+    comment: "描述",
+  })
+  description: string | null;
 
   @Column({
     type: "varchar",

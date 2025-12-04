@@ -36,12 +36,14 @@ export class ModelService {
 
     const models = await this.repository.find({
       where,
-      order: { updateTime: "DESC", createTime: "DESC" },
+      order: { createTime: "DESC" },
     });
 
     return models.map((model) =>
       ModelSchema.parse({
         ...model,
+        functionCalling: Boolean(model.functionCalling),
+        enabled: Boolean(model.enabled),
         createTime: model.createTime.toISOString(),
         updateTime: model.updateTime?.toISOString() ?? null,
       }),
@@ -59,6 +61,8 @@ export class ModelService {
 
     return ModelSchema.parse({
       ...model,
+      functionCalling: Boolean(model.functionCalling),
+      enabled: Boolean(model.enabled),
       createTime: model.createTime.toISOString(),
       updateTime: model.updateTime?.toISOString() ?? null,
     });

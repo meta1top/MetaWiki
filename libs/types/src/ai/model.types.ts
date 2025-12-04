@@ -1,3 +1,15 @@
+import { z } from "zod";
+
+/**
+ * 模型类型枚举值
+ */
+export const MODEL_TYPE_VALUES = ["LLM", "TEXT_EMBEDDING", "RERANK", "SPEECH2TEXT", "TTS"] as const;
+
+/**
+ * 模型类型 Zod 枚举
+ */
+export const ModelTypeEnum = z.enum(MODEL_TYPE_VALUES);
+
 /**
  * 模型类型枚举
  */

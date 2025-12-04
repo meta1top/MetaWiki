@@ -29,8 +29,8 @@ export const SettingLayout: FC<SettingLayoutProps> = (props) => {
   return (
     <MainLayout bodyClassName="flex" className={className} footerProps={{ enable: false }}>
       <div className="flex flex-1">
-        <div className="w-60 flex-shrink-0">
-          <div className="sticky top-0 z-40 h-screen border-r bg-card p-md">
+        <aside className="w-60 flex-shrink-0 border-r bg-card">
+          <div className="sticky top-0 z-40 p-sm">
             <nav className="flex flex-col gap-xs">
               {menuItems.map((item) => (
                 <Link
@@ -48,8 +48,8 @@ export const SettingLayout: FC<SettingLayoutProps> = (props) => {
               ))}
             </nav>
           </div>
-        </div>
-        <div className="flex-1">{children}</div>
+        </aside>
+        <main className="flex-1">{children}</main>
       </div>
     </MainLayout>
   );

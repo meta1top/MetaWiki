@@ -1,17 +1,20 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import { AppError, Transactional } from "@meta-1/nest-common";
 import type { ModelProvider } from "@meta-1/wiki-types";
 import { ModelProviderSchema } from "@meta-1/wiki-types";
 import { CreateModelProviderDto, UpdateModelProviderDto } from "../dto";
-import { ModelProvider as ModelProviderEntity } from "../entity";
+import { Model as ModelEntity, ModelProvider as ModelProviderEntity } from "../entity";
 import { ErrorCode } from "../shared";
 
 @Injectable()
 export class ModelProviderService {
-  constructor(@InjectRepository(ModelProviderEntity) private repository: Repository<ModelProviderEntity>) {}
+  constructor(
+    @InjectRepository(ModelProviderEntity) private repository: Repository<ModelProviderEntity>,
+    @InjectRepository(ModelEntity) private modelRepository: Repository<ModelEntity>,
+  ) {}
 
   @Transactional()
   async create(dto: CreateModelProviderDto, creatorId: string): Promise<void> {
@@ -38,9 +41,24 @@ export class ModelProviderService {
       order: { updateTime: "DESC", createTime: "DESC" },
     });
 
+    const providerIds = providers.map((p) => p.id);
+    const models = await this.modelRepository.find({
+      where: { providerId: In(providerIds), creatorId, deleted: false },
+      select: ["providerId", "type"],
+    });
+
+    const modelTypesMap = new Map<string, Set<string>>();
+    models.forEach((model) => {
+      if (!modelTypesMap.has(model.providerId)) {
+        modelTypesMap.set(model.providerId, new Set());
+      }
+      modelTypesMap.get(model.providerId)!.add(model.type);
+    });
+
     return providers.map((provider) =>
       ModelProviderSchema.parse({
         ...provider,
+        modelTypes: Array.from(modelTypesMap.get(provider.id) || []),
         createTime: provider.createTime.toISOString(),
         updateTime: provider.updateTime?.toISOString() ?? null,
       }),
