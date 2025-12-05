@@ -1,0 +1,135 @@
+.get_image_tag_script: &get_image_tag_script |
+  if [[ $CI_COMMIT_TAG =~ ^${PROJECT_NAME}-prod-(.*)$ ]]; then
+    export IMAGE_TAG="prod-${BASH_REMATCH[1]}"
+  elif [[ $CI_COMMIT_TAG =~ ^${PROJECT_NAME}-dev-(.*)$ ]]; then
+    export IMAGE_TAG="dev-${BASH_REMATCH[1]}"
+  else
+    export IMAGE_TAG=$CI_PIPELINE_ID
+  fi
+  echo "Using image tag: $IMAGE_TAG"
+
+.docker_build_script: &docker_build_script |
+  echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  echo "Building Docker image for ${PROJECT_NAME}..."
+  # 根据项目名称确定 Dockerfile 路径
+  DOCKERFILE_PATH="apps/${PROJECT_NAME}/Dockerfile"
+  if [ ! -f "$DOCKERFILE_PATH" ]; then
+    echo "Error: Dockerfile not found at $DOCKERFILE_PATH"
+    exit 1
+  fi
+  docker build -t $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:$IMAGE_TAG -f $DOCKERFILE_PATH .
+  echo "Tagging image as latest..."
+  docker tag $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:$IMAGE_TAG $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:latest
+  echo "Pushing image with tag: $IMAGE_TAG"
+  docker push $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:$IMAGE_TAG
+  echo "Pushing image as latest..."
+  docker push $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:latest
+  echo "Cleaning up local images..."
+  docker rmi $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:$IMAGE_TAG || true
+  docker rmi $CI_REGISTRY/meta1/wiki/${PROJECT_NAME}:latest || true
+  echo "Docker build and push completed successfully"
+
+.deploy_script: &deploy_script |
+  git clone https://$GIT_USERNAME:$GIT_TOKEN@git.meta1.top/deploy/qriter.git
+  cd qriter
+  git checkout main
+
+  BRANCH="${PROJECT_NAME}-${IMAGE_TAG}"
+  git fetch origin
+  if git ls-remote --exit-code --heads origin $BRANCH; then
+    git checkout $BRANCH
+    git pull origin $BRANCH
+  else
+    git checkout -b $BRANCH
+  fi
+
+  # 从 IMAGE_TAG 中提取环境信息
+  if [[ $IMAGE_TAG =~ ^prod-(.*)$ ]]; then
+    ENV="prod"
+  elif [[ $IMAGE_TAG =~ ^dev-(.*)$ ]]; then
+    ENV="dev"
+  else
+    ENV="dev"  # 默认为 dev 环境
+  fi
+  
+  yq e ".spec.template.spec.containers[0].image = \"hub.meta1.top/wiki/${PROJECT_NAME}:${IMAGE_TAG}\"" -i ${ENV}/${PROJECT_NAME}/deployment.yaml
+
+  git config user.name "gitlab-ci"
+  git config user.email "gitlab-ci@local"
+  git add ${ENV}/${PROJECT_NAME}/deployment.yaml
+  git commit -m "ci: update targetRevision to $IMAGE_TAG [ci skip]" || echo "No changes to commit"
+  git push origin $BRANCH
+  
+  ARGOCD_SERVER="$ARGOCD_SERVER"
+  ARGOCD_APP="wiki-${PROJECT_NAME}-${ENV}"
+  ARGOCD_TOKEN="$ARGOCD_TOKEN"
+
+  curl -k -w "\n" \
+    -H "Authorization: Bearer $ARGOCD_TOKEN" \
+    -H "Content-Type: application/json" \
+    -X PATCH "$ARGOCD_SERVER/api/v1/applications/$ARGOCD_APP" \
+    -d "{\"patch\":\"{\\\"spec\\\":{\\\"source\\\":{\\\"targetRevision\\\":\\\"${BRANCH}\\\"}}}\",\"patchType\":\"merge\"}"
+  echo "ArgoCD set targetRevision: $BRANCH"
+
+  curl -k -w "\n" \
+    -H "Authorization: Bearer $ARGOCD_TOKEN" \
+    -H "Content-Type: application/json" \
+    -X POST "$ARGOCD_SERVER/api/v1/applications/$ARGOCD_APP/sync" \
+    -d "{\"revision\":\"${BRANCH}\"}"
+  echo "ArgoCD sync revision: $BRANCH"
+
+stages:
+  - package
+  - deploy
+
+package-server:
+  stage: package
+  only:
+    - /^server-prod-.*$/
+    - /^server-dev-.*$/
+  tags:
+    - easykit
+  variables:
+    PROJECT_NAME: "server"
+  script:
+    - *get_image_tag_script
+    - *docker_build_script
+
+package-web:
+  stage: package
+  only:
+    - /^web-prod-.*$/
+    - /^web-dev-.*$/
+  tags:
+    - easykit
+  variables:
+    PROJECT_NAME: "web"
+  script:
+    - *get_image_tag_script
+    - *docker_build_script
+
+deploy-server:
+  stage: deploy
+  only:
+    - /^server-prod-.*$/
+    - /^server-dev-.*$/
+  tags:
+    - easykit
+  variables:
+    PROJECT_NAME: "server"
+  script:
+    - *get_image_tag_script
+    - *deploy_script
+
+deploy-web:
+  stage: deploy
+  only:
+    - /^web-prod-.*$/
+    - /^web-dev-.*$/
+  tags:
+    - easykit
+  variables:
+    PROJECT_NAME: "web"
+  script:
+    - *get_image_tag_script
+    - *deploy_script

@@ -6,6 +6,8 @@ export const listRepo = () => get<WikiRepo[]>("@api/wiki/repo/list");
 export const createRepo = (data: CreateWikiRepoData) =>
   post<unknown, CreateWikiRepoData>("@api/wiki/repo/create", data);
 
+export const getRepoById = (id: string) => get<WikiRepoDetail>(`@api/wiki/repo/id/${id}`);
+
 export const getRepoByPath = (path: string) => get<WikiRepoDetail>(`@api/wiki/repo/${path}`);
 
 export const updateRepo = (id: string, data: UpdateWikiRepoData) =>

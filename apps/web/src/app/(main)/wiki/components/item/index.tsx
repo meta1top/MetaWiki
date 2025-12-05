@@ -10,7 +10,6 @@ import { z } from "zod";
 import {
   Action,
   Avatar,
-  Badge,
   Button,
   Card,
   Dialog,
@@ -110,7 +109,7 @@ export const RepoItem: FC<RepoItemProps> = ({ repo, onSuccess }) => {
         contentClassName="!p-md"
         shadow={false}
       >
-        <Link href={`/wiki/${repo.path}`}>
+        <Link href={`/wiki/${repo.id}`}>
           <div className="flex items-start gap-sm">
             <Avatar
               alt={repo.name}
@@ -122,7 +121,6 @@ export const RepoItem: FC<RepoItemProps> = ({ repo, onSuccess }) => {
             <div className="min-w-0 flex-1 space-y-2xs">
               <div className="flex items-center gap-xs">
                 <span className="truncate font-medium text-md">{repo.name}</span>
-                <Badge variant="info">{repo.path}</Badge>
               </div>
               <div className="line-clamp-2 min-h-[2.5rem] text-muted-foreground text-xs">
                 {repo.description || "\u00A0"}

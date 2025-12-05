@@ -17,8 +17,9 @@
   },
   "scripts": {
     "dev": "next dev -p 3110",
-    "build": "next build",
-    "start": "next start"
+    "build": "next build && node scripts/post-build.js",
+    "start": "next start -p 3110",
+    "start:standalone": "cd .next/standalone/apps/web && NODE_ENV=production PORT=3110 node server.js"
   },
   "type": "module",
   "dependencies": {

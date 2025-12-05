@@ -1,4 +1,4 @@
-import type { Profile } from "@/types/account";
+import type { Profile } from "@meta-1/wiki-types";
 import { get, put } from "@/utils/rest";
 
 export const profile = (username: string) => get<Profile, undefined>(`@main/account/profile/${username}`);

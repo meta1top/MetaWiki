@@ -1,4 +1,4 @@
-import type { LoginFormData } from "@/schema/login";
+import type { LoginData } from "@meta-1/wiki-types";
 
 export interface Token {
   token: string;
@@ -7,4 +7,4 @@ export interface Token {
 
 export type LoginRestData = {
   code?: string;
-} & LoginFormData;
+} & LoginData;

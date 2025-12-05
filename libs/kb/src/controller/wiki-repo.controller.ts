@@ -27,9 +27,20 @@ export class WikiRepoController {
     return this.wikiRepoService.create(dto, user.id);
   }
 
+  @Get("/id/:id")
+  @ApiOperation({ summary: "根据ID获取知识库详情" })
+  @ApiParam({ name: "id", description: "知识库ID" })
+  @ApiResponse({
+    status: 200,
+    type: WikiRepoDetailDto,
+  })
+  getById(@Param("id") id: string): Promise<WikiRepoDetail> {
+    return this.wikiRepoService.getById(id);
+  }
+
   @Get("/:path")
-  @ApiOperation({ summary: "根据路径获取知识库详情" })
-  @ApiParam({ name: "path", description: "知识库访问路径" })
+  @ApiOperation({ summary: "根据路径获取知识库详情（向后兼容）" })
+  @ApiParam({ name: "path", description: "知识库访问路径或ID" })
   @ApiResponse({
     status: 200,
     type: WikiRepoDetailDto,

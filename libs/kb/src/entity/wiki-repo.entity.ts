@@ -20,9 +20,10 @@ export class WikiRepo {
   @Column({
     type: "varchar",
     length: 500,
-    comment: "访问路径",
+    nullable: true,
+    comment: "访问路径（兼容字段，已废弃）",
   })
-  path: string;
+  path: string | null;
 
   @Column({
     type: "text",
@@ -68,6 +69,22 @@ export class WikiRepo {
     comment: "封面",
   })
   cover: string | null;
+
+  @Column({
+    type: "varchar",
+    length: 20,
+    nullable: false,
+    comment: "Embedding 模型ID",
+  })
+  embeddingModelId: string;
+
+  @Column({
+    type: "varchar",
+    length: 20,
+    nullable: false,
+    comment: "重排模型ID",
+  })
+  rerankModelId: string;
 
   @Column({
     type: "tinyint",

@@ -56,12 +56,21 @@ export class AppModule {
 
     if (preloadedConfig?.database) {
       logger.log("Initializing TypeORM with preloaded config");
+      const isDevelopment = process.env.NODE_ENV === "development";
+      const databaseConfig = {
+        ...preloadedConfig.database,
+        // 生产环境强制禁用 schema 同步，确保数据库安全
+        synchronize: isDevelopment ? (preloadedConfig.database.synchronize ?? false) : false,
+      };
+      if (!isDevelopment && preloadedConfig.database.synchronize) {
+        logger.warn("synchronize is disabled in production environment for safety");
+      }
       imports.push(
         TypeOrmModule.forRoot({
           type: "mysql",
           autoLoadEntities: true,
           namingStrategy: new SnakeNamingStrategy(),
-          ...preloadedConfig.database,
+          ...databaseConfig,
         }),
       );
     } else {

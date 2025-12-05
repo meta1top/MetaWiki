@@ -14,10 +14,11 @@ export type CoverUploaderProps = {
   value?: string | null;
   onChange?: (value?: string | null) => void;
   className?: string;
+  size?: number;
 };
 
 export const CoverUploader = (props: CoverUploaderProps) => {
-  const { value, onChange, className } = props;
+  const { value, onChange, className, size = 100 } = props;
   const { t } = useTranslation();
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [visible, setVisible] = useState(false);
@@ -56,9 +57,20 @@ export const CoverUploader = (props: CoverUploaderProps) => {
   };
 
   const onCrop = (dataURL: string) => {
-    const file = dataURLToFile(dataURL!, "cover.png");
-    setVisible(false);
-    uploadFile(file).then();
+    // 确保裁剪后的图片尺寸为指定大小
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = size;
+      canvas.height = size;
+      ctx?.drawImage(img, 0, 0, size, size);
+      const resizedDataURL = canvas.toDataURL("image/png");
+      const file = dataURLToFile(resizedDataURL, "cover.png");
+      setVisible(false);
+      uploadFile(file).then();
+    };
+    img.src = dataURL;
   };
 
   const onRemove = (e: React.MouseEvent) => {
@@ -71,24 +83,25 @@ export const CoverUploader = (props: CoverUploaderProps) => {
   return (
     <div
       className={classNames(
-        "group relative aspect-square w-full max-w-[200px] overflow-hidden rounded-lg border-2 border-dashed transition-all",
+        "group relative overflow-hidden rounded-lg border-2 border-dashed transition-all",
         src
           ? "border-border bg-background"
           : "border-muted-foreground/25 bg-muted/30 hover:border-muted-foreground/50 hover:bg-muted/50",
         "flex items-center justify-center",
         className,
       )}
+      style={{ width: size, height: size }}
     >
       {src ? (
         <>
           <img alt="cover" className="h-full w-full object-cover" src={src} />
           <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/40">
             <button
-              className="absolute top-2 right-2 z-10 flex size-8 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground opacity-0 shadow-lg transition-opacity hover:bg-destructive group-hover:opacity-100"
+              className="absolute top-2 right-2 z-10 flex size-6 items-center justify-center rounded-full bg-destructive/90 text-destructive-foreground opacity-0 shadow-lg transition-opacity hover:bg-destructive group-hover:opacity-100"
               onClick={onRemove}
               type="button"
             >
-              <X className="size-4" />
+              <X className="size-3" />
             </button>
             <Uploader
               accept={{
@@ -125,21 +138,11 @@ export const CoverUploader = (props: CoverUploaderProps) => {
         >
           <div className="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 p-6 transition-opacity hover:opacity-80">
             {uploading ? (
-              <div className="flex flex-col items-center justify-center gap-2">
-                <Spin className="size-8 text-muted-foreground" />
-                <span className="text-muted-foreground text-sm">{t("上传中...")}</span>
-              </div>
+              <Spin className="size-8 text-muted-foreground" />
             ) : (
-              <>
-                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                  <ImageIcon className="size-6 text-muted-foreground" />
-                </div>
-                <div className="flex flex-col items-center justify-center gap-1 text-center">
-                  <span className="font-medium text-foreground text-sm">{t("上传封面")}</span>
-                  <span className="text-muted-foreground text-xs">{t("支持 JPG、PNG 等格式")}</span>
-                  <span className="text-muted-foreground text-xs">{t("建议尺寸 1:1")}</span>
-                </div>
-              </>
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <ImageIcon className="size-6 text-muted-foreground" />
+              </div>
             )}
           </div>
         </Uploader>

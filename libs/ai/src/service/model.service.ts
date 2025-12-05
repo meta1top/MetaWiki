@@ -50,6 +50,33 @@ export class ModelService {
     );
   }
 
+  async listEnabled(creatorId: string, type?: string): Promise<Model[]> {
+    const where: { creatorId: string; deleted: boolean; enabled: boolean; type?: string } = {
+      creatorId,
+      deleted: false,
+      enabled: true,
+    };
+
+    if (type) {
+      where.type = type;
+    }
+
+    const models = await this.repository.find({
+      where,
+      order: { createTime: "DESC" },
+    });
+
+    return models.map((model) =>
+      ModelSchema.parse({
+        ...model,
+        functionCalling: Boolean(model.functionCalling),
+        enabled: Boolean(model.enabled),
+        createTime: model.createTime.toISOString(),
+        updateTime: model.updateTime?.toISOString() ?? null,
+      }),
+    );
+  }
+
   async getById(id: string): Promise<Model> {
     const model = await this.repository.findOne({
       where: { id, deleted: false },

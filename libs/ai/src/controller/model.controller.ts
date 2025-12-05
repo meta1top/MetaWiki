@@ -22,6 +22,17 @@ export class ModelController {
     return this.modelService.list(user.id, providerId);
   }
 
+  @Get("/enabled")
+  @ApiOperation({ summary: "获取所有启用的模型" })
+  @ApiQuery({ name: "type", required: false, description: "模型类型（可选）" })
+  @ApiResponse({
+    status: 200,
+    type: [ModelDto],
+  })
+  listEnabled(@CurrentUser() user: SessionUser, @Query("type") type?: string): Promise<Model[]> {
+    return this.modelService.listEnabled(user.id, type);
+  }
+
   @Post("/create")
   @ApiOperation({ summary: "创建模型" })
   create(@Body() dto: CreateModelDto, @CurrentUser() user: SessionUser): Promise<void> {

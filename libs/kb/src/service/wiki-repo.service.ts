@@ -14,23 +14,14 @@ export class WikiRepoService {
   constructor(@InjectRepository(WikiRepoEntity) private repository: Repository<WikiRepoEntity>) {}
 
   @WithLock({
-    key: "wiki-repo:create:#{path}",
+    key: "wiki-repo:create",
     ttl: 10000,
     waitTimeout: 2000,
     errorMessage: "知识库创建中，请稍后重试",
   })
   @Transactional()
   async create(dto: CreateWikiRepoDto, creatorId: string): Promise<void> {
-    // 检查访问路径是否已存在
-    const existingRepo = await this.repository.findOne({
-      where: { path: dto.path, deleted: false },
-    });
-
-    if (existingRepo) {
-      throw new AppError(ErrorCode.WIKI_REPO_PATH_EXISTS);
-    }
-
-    // 创建知识库
+    // 创建知识库（不再需要 path 唯一性检查，使用 id 作为唯一标识）
     const repo = this.repository.create({
       ...dto,
       creatorId,
@@ -55,10 +46,24 @@ export class WikiRepoService {
     );
   }
 
-  async getByPath(path: string): Promise<WikiRepoDetail> {
+  async getById(id: string): Promise<WikiRepoDetail> {
     const repo = await this.repository.findOne({
-      where: { path, deleted: false },
-      select: ["cover", "name", "path", "description"],
+      where: { id, deleted: false },
+      select: ["id", "cover", "name", "description", "embeddingModelId", "rerankModelId"],
+    });
+
+    if (!repo) {
+      throw new AppError(ErrorCode.REPOSITORY_NOT_FOUND);
+    }
+
+    return WikiRepoDetailSchema.parse(repo);
+  }
+
+  async getByPath(path: string): Promise<WikiRepoDetail> {
+    // 向后兼容：按 id 查询（path 参数实际是 id）
+    const repo = await this.repository.findOne({
+      where: { id: path, deleted: false },
+      select: ["id", "cover", "name", "description", "embeddingModelId", "rerankModelId"],
     });
 
     if (!repo) {
@@ -82,12 +87,29 @@ export class WikiRepoService {
       throw new AppError(ErrorCode.REPOSITORY_ACCESS_DENIED);
     }
 
-    // path 字段不允许修改，只更新 name、description、cover
-    await this.repository.update(id, {
-      ...dto,
+    // 过滤掉 null 值，因为模型字段现在是必填的
+    const updateData: Partial<WikiRepoEntity> = {
       updaterId: userId,
       updateTime: new Date(),
-    });
+    };
+
+    if (dto.name !== undefined) {
+      updateData.name = dto.name;
+    }
+    if (dto.description !== undefined) {
+      updateData.description = dto.description;
+    }
+    if (dto.cover !== undefined) {
+      updateData.cover = dto.cover;
+    }
+    if (dto.embeddingModelId !== undefined && dto.embeddingModelId !== null) {
+      updateData.embeddingModelId = dto.embeddingModelId;
+    }
+    if (dto.rerankModelId !== undefined && dto.rerankModelId !== null) {
+      updateData.rerankModelId = dto.rerankModelId;
+    }
+
+    await this.repository.update(id, updateData);
   }
 
   @Transactional()
